@@ -1,5 +1,4 @@
-﻿
-/* 2 siteden intihal kontorlünde bulundum. https://www.paraphraser.io/tr/intihal-programi#google_vignette BU SİTEDE % 12 İNTİHAL 
+﻿/* 2 siteden intihal kontorlünde bulundum. https://www.paraphraser.io/tr/intihal-programi#google_vignette BU SİTEDE % 12 İNTİHAL 
  https://copyleaks.com/ BU SİTEDE İSE % 14 İNTİHAL ÇIKTI* Sizin pdflerinizden ve youtube-web de bulunan örneklerden faydalandım./
 /*PROJE AMACI VE PROJE ADINI ALTTAKİ YORUM SATIRINDA ANLATACAĞIM
  *  PROJEMİN ADI -> KÜTÜPHANE OTOMASYONU
@@ -10,13 +9,16 @@
  * Arayüz kullanmak, kodun daha iyi test edilebilir olmasını sağlar.Interface kullanmak, kodun daha anlaşılır olmasını sağlar. Giriş bölümünde temel bir kullanıcı kimlik doğrulama işlemi gerçekleştirilir. 
  * Bu programla üyelerin güvemliğini sağlamak ve düzenli,anlaşılır bir sistem kurmak istedim.
 */
+using System.Drawing;
+
 interface IKutuphane
 {
     void UyeEkle(Uye uye);
     void KitapEkle(Kitap kitap);
     void UyeGiris(int uyeNumarasi, string sifre);
-    void KitapOduncAl(int kitapIndex, int uyeNumarasi);
-    void KataloguGoruntule();
+    void KitapOduncAl();
+    void KataloguGoruntule(bool anaMenuGoster);
+    void UyeleriGoruntule();
     void KitapEklemeEkranı();
     void YeniUyeEklemeEkranı();
 }
@@ -98,6 +100,7 @@ class KutuphaneOtomasyonu : IKutuphane
 
     public void KitapEkle(Kitap kitap)
     {
+        Console.Clear();
         kitaplar.Add(kitap);
         Console.WriteLine("Kitap eklendi: " + kitap);
     }
@@ -125,37 +128,78 @@ class KutuphaneOtomasyonu : IKutuphane
 
     /* uyeler.find metodu kullanılarak uyeler listesinde belirtilen özelliklere sahip bir Uye nesnesi aranır ve ıf koşulu kontrol edilir.
       eğer  Uye değişkeni null yani boş değilse "giriş başarılı" bildirisi ekrana yazdırılır aksi halde hata mesajı verir.*/
-    public void KitapOduncAl(int kitapIndex, int uyeNumarasi)
+    public void KitapOduncAl()
     {
-        if (kitapIndex >= 0 && kitapIndex < kitaplar.Count)
+        Console.Clear();
+        KataloguGoruntule(false);
+        Console.WriteLine("Lütfen kitap numarası seçiniz:");
+        string key = Console.ReadLine();
+        int kitapIndex = -1;
+        if (int.TryParse(key, out kitapIndex))
         {
-            Kitap kitap = kitaplar[kitapIndex];
-
-            if (!kitap.OduncAlindiMi)
+            if (kitapIndex >= 1 && kitapIndex <= kitaplar.Count)
             {
-                kitap.OduncAlindiMi = true;
-                Console.WriteLine(kitap.KitapAdi + " kitabı " + uyeNumarasi + " numaralı kişi tarafından ödünç alındı.");
+                UyeleriGoruntule();
+                Console.WriteLine("Lütfen üye numarası seçiniz:");
+                key = Console.ReadLine();
+                int uyeIndex = -1;
+                if (int.TryParse(key, out uyeIndex))
+                {
+                    Kitap kitap = kitaplar[kitapIndex - 1];
+                    Uye uye = uyeler.Find(u => u.UyeNumarasi == uyeIndex);
+                    if (uye == null)
+                        KitapOduncAl();
+
+                    if (!kitap.OduncAlindiMi)
+                    {
+                        kitap.OduncAlindiMi = true;
+                        Console.WriteLine(kitap.KitapAdi + " kitabı " + uye.UyeAdi + " tarafından ödünç alındı.");
+                    }
+                    else
+                    {
+                        Console.WriteLine(kitap.KitapAdi + " kitabı zaten ödünç alınmış.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Lütfen geçerli bir üye numarası giriniz.");
+                    KitapOduncAl();
+                }
             }
             else
             {
-                Console.WriteLine(kitap.KitapAdi + " kitabı zaten ödünç alınmış.");
+                Console.WriteLine("Lütfen geçerli bir kitap numarası giriniz.");
+                KitapOduncAl();
             }
-        }
-        else
-        {
-            Console.WriteLine("Geçersiz kitap index'i.");
         }
     }
 
     /*KitapIndex parametresi kütüphanede geçerli index olup olmadığını kontrol eder eğer geçerli indeks yoksa "Geçersiz kitap indexi" hatası verir.
      Böylece metot sonlanır. kitap.OduncAlindiMi kontrol edilir, kitabın  ödünç alınıp alınmadığına bakılır. Odunc alınmadıysa "true" olarak gösterilir
     Ödünç alma işlemi başarılı olursa ekrana "....kitabı x üye numaralı kişi tarafından ödünç alındı."  yazdırılır.*/
-    public void KataloguGoruntule()
+    public void KataloguGoruntule(bool anaMenuGoster = false)
     {
+        Console.Clear();
         Console.WriteLine("Kütüphanede bulunan kitaplar:");
+        int i = 0;
         foreach (Kitap kitap in kitaplar)
         {
-            Console.WriteLine(kitap);
+            i++;
+            Console.WriteLine($"{i}-{kitap}");
+        }
+        if (anaMenuGoster)
+            AnaMenu();
+    }
+
+    public void UyeleriGoruntule()
+    {
+        Console.Clear();
+        Console.WriteLine("Kütüphanede bulunan kitaplar:");
+        int i = 0;
+        foreach (Uye uye in uyeler)
+        {
+            i++;
+            Console.WriteLine($"{i}-{uye}");
         }
     }
 
@@ -163,6 +207,7 @@ class KutuphaneOtomasyonu : IKutuphane
      Burdaki temel amaç katalogdaki kitapları ekrana yazdırmaktır.*/
     public void KitapEklemeEkranı()
     {
+        Console.Clear();
         Console.WriteLine("Yeni kitap eklemek için bilgileri girin:");
 
         Console.Write("Kitap Adı: ");
@@ -192,6 +237,24 @@ class KutuphaneOtomasyonu : IKutuphane
         Uye yeniUye = new Uye { UyeNumarasi = yeniUyeNumarasi, UyeAdi = uyeAdi, Sifre = uyeSifre };
         UyeEkle(yeniUye);
     }
+
+    public void AnaMenu()
+    {
+        while (true)
+        {
+            Console.WriteLine("╔═════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║   1-Kitap Ekle | 2-Kitapları Görüntüle | 3-Kitap Ödünç Al   ║");
+            Console.WriteLine("╚═════════════════════════════════════════════════════════════╝");
+            ConsoleKey key = Console.ReadKey().Key;
+            switch (key)
+            {
+                case ConsoleKey.D1: KitapEklemeEkranı(); break;
+                case ConsoleKey.D2: KataloguGoruntule(); break;
+                case ConsoleKey.D3: KitapOduncAl(); break;
+                default: break;
+            }
+        }
+    }
 }
 
 // Üstte kalan alanalrda amaç kitap ve üye eklemektir. "uyeler" listesindeki mevcut üye sayısına 1 eklenerek yeni üye numarası belirlenir.
@@ -217,18 +280,12 @@ class Program
         kutuphane.KitapEkle(kitap1);
         kutuphane.KitapEkle(kitap2);
 
-        kutuphane.KataloguGoruntule();
+        kutuphane.KataloguGoruntule(true);
 
         kutuphane.UyeGiris(1, "2580");
         kutuphane.UyeGiris(3, "6758"); //böyle bir üye olmadığı için hatası alınır.
-        kutuphane.KitapOduncAl(0, 1);
 
-        kutuphane.KataloguGoruntule();
-
-     
-        kutuphane.KitapEklemeEkranı();
-        kutuphane.KataloguGoruntule();
-
+        kutuphane.AnaMenu();
         /* sınıflar oluşturulur ve program sınıfının maini içinde  bu sınıftaki örnek nesneler oluşturulur. 
          Üye ve kitap nesneleri kütüphaneye eklenir.Kataloglar görüntülenir.
         Giriş kısmı gösterilir , başarılı olup olmadığı ekrana bastırılır.
